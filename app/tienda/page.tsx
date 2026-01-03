@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { MessageCircle, X } from "lucide-react";
 
+// ===============================
+// TYPES
+// ===============================
 type Producto = {
   id: number;
   nombre: string;
@@ -16,48 +19,70 @@ type Producto = {
 
 const WHATSAPP_NUMBER = "543804315721";
 
+// ===============================
+// COMPONENT
+// ===============================
 export default function TiendaPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const categoria = searchParams.get("categoria");
 
+  const [categoria, setCategoria] = useState<string | null>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Imagen ampliada
   const [imagenAbierta, setImagenAbierta] = useState<string | null>(null);
   const [nombreImagen, setNombreImagen] = useState<string>("");
 
+  // ===============================
+  // LEER QUERY MANUAL (CLIENT ONLY)
+  // ===============================
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get("categoria");
+    setCategoria(cat);
+  }, []);
+
   useEffect(() => {
     fetchTienda();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoria]);
 
   const fetchTienda = async () => {
     setLoading(true);
 
+    const base = process.env.NEXT_PUBLIC_API_URL;
+    if (!base) {
+      console.error("Falta NEXT_PUBLIC_API_URL");
+      setLoading(false);
+      return;
+    }
+
     const url = categoria
-      ? `${process.env.NEXT_PUBLIC_API_URL}/tienda?categoria=${encodeURIComponent(
-          categoria
-        )}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/tienda`;
+      ? `${base}/tienda?categoria=${encodeURIComponent(categoria)}`
+      : `${base}/tienda`;
 
-    const res = await fetch(url);
-    const data = await res.json();
-
-    setProductos(data.productos || []);
-    setCategorias(data.categorias || []);
-    setLoading(false);
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      setProductos(data.productos || []);
+      setCategorias(data.categorias || []);
+    } catch (e) {
+      console.error("Error cargando tienda", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cambiarCategoria = (cat: string | null) => {
-    if (!cat) router.push("/tienda");
-    else router.push(`/tienda?categoria=${encodeURIComponent(cat)}`);
+    if (!cat) {
+      router.push("/tienda");
+      setCategoria(null);
+    } else {
+      router.push(`/tienda?categoria=${encodeURIComponent(cat)}`);
+      setCategoria(cat);
+    }
   };
 
-  // ===============================
-  // 💰 FORMATEADOR DE PRECIO
-  // ===============================
   const formatPrecio = (precio: unknown) => {
     const n = Number(precio);
     if (isNaN(n)) return "$0";
@@ -66,30 +91,21 @@ export default function TiendaPage() {
 
   const contactarWhatsApp = (producto: Producto) => {
     const mensaje = `Hola, estoy interesado en este producto: ${producto.nombre}`;
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-      mensaje
-    )}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`,
+      "_blank"
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#1C1C1B] text-[#E2E2DE] space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Tienda
-        </h1>
+    <div className="min-h-screen bg-[#1C1C1B] text-[#E2E2DE] p-6 space-y-6">
+      <div className="flex justify-between items-center gap-4">
+        <h1 className="text-2xl font-semibold">Tienda</h1>
 
-        {/* Filtro categoría */}
         <select
           value={categoria ?? ""}
           onChange={(e) => cambiarCategoria(e.target.value || null)}
-          className="
-            bg-[#2A2A29]
-            border border-[#979086]
-            rounded-lg px-4 py-2 text-sm
-            text-[#E2E2DE]
-          "
+          className="bg-[#2A2A29] border border-[#979086] rounded-lg px-4 py-2 text-sm"
         >
           <option value="">Todas las categorías</option>
           {categorias.map((c) => (
@@ -100,42 +116,13 @@ export default function TiendaPage() {
         </select>
       </div>
 
-      {/* LOADING */}
-      {loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-72 bg-[#2A2A29] rounded-xl animate-pulse"
-            />
-          ))}
-        </div>
-      )}
+      {loading && <p>Cargando productos…</p>}
 
-      {/* SIN PRODUCTOS */}
-      {!loading && productos.length === 0 && (
-        <div className="text-center text-[#979086]">
-          No hay productos disponibles
-        </div>
-      )}
-
-      {/* PRODUCTOS */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {productos.map((p) => (
-          <div
-            key={p.id}
-            className="
-              bg-[#2A2A29]
-              rounded-xl
-              border border-[#3A3A38]
-              overflow-hidden
-              hover:border-[#6A5D52]
-              transition
-            "
-          >
-            {/* Imagen (click para ampliar) */}
+          <div key={p.id} className="bg-[#2A2A29] rounded-xl overflow-hidden">
             <div
-              className="relative aspect-square bg-black cursor-zoom-in"
+              className="relative aspect-square bg-black cursor-pointer"
               onClick={() => {
                 setImagenAbierta(p.foto_url || "/placeholder.png");
                 setNombreImagen(p.nombre);
@@ -145,36 +132,23 @@ export default function TiendaPage() {
                 src={p.foto_url || "/placeholder.png"}
                 alt={p.nombre}
                 fill
-                className="object-contain p-4 hover:scale-105 transition"
+                className="object-contain p-4"
               />
             </div>
 
-            {/* Info */}
             <div className="p-4 space-y-2">
-              <h2 className="font-medium text-sm line-clamp-2">
-                {p.nombre}
-              </h2>
+              <h2 className="text-sm font-medium">{p.nombre}</h2>
 
-              <div className="flex justify-between items-center">
-                <span className="text-[#B7AC9B] font-semibold">
-                  {formatPrecio(p.precio)}
-                </span>
-
-                <span className="text-xs text-[#979086]">
-                  Stock: {p.stock ?? 0}
-                </span>
+              <div className="flex justify-between text-sm">
+                <span>{formatPrecio(p.precio)}</span>
+                <span>Stock: {p.stock ?? 0}</span>
               </div>
 
               <button
                 onClick={() => contactarWhatsApp(p)}
-                className="
-                  w-full mt-2 flex items-center justify-center gap-2
-                  bg-[#6A5D52] hover:bg-[#5A4F45]
-                  text-white text-sm py-2 rounded-lg
-                  transition
-                "
+                className="w-full bg-[#6A5D52] text-white py-2 rounded-lg"
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="inline w-4 h-4 mr-2" />
                 Consultar
               </button>
             </div>
@@ -182,38 +156,25 @@ export default function TiendaPage() {
         ))}
       </div>
 
-      {/* MODAL IMAGEN GRANDE */}
       {imagenAbierta && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center"
           onClick={() => setImagenAbierta(null)}
         >
-          <div
-            className="relative max-w-4xl w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative w-full max-w-xl">
             <button
+              className="absolute -top-10 right-0 text-white"
               onClick={() => setImagenAbierta(null)}
-              className="
-                absolute -top-10 right-0
-                text-white hover:text-[#B7AC9B]
-              "
             >
               <X size={28} />
             </button>
-
-            <div className="relative w-full aspect-square bg-black rounded-xl overflow-hidden">
-              <Image
-                src={imagenAbierta}
-                alt={nombreImagen}
-                fill
-                className="object-contain"
-              />
-            </div>
-
-            <p className="mt-3 text-center text-sm text-[#B7AC9B]">
-              {nombreImagen}
-            </p>
+            <Image
+              src={imagenAbierta}
+              alt={nombreImagen}
+              width={800}
+              height={800}
+              className="object-contain"
+            />
           </div>
         </div>
       )}
