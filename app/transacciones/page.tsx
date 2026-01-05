@@ -145,7 +145,7 @@ export default function TransaccionesPage() {
           <Button
             variant="outline"
             onClick={exportarExcel}
-            className="border-[#6A5D52] text-white hover:bg-[#6A5D52]"
+            className="border-[#6A5D52] text-black hover:bg-[#6A5D52]"
           >
             <FileDown className="mr-2 h-4 w-4" />
             Excel
