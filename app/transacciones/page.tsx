@@ -113,13 +113,13 @@ export default function TransaccionesPage() {
 
   return (
     <div className="min-h-screen p-6 bg-[#1C1C1B] text-white space-y-6">
-      <h1 className="text-2xl font-bold">Transacciones</h1>
+      <h1 className="text-2xl font-bold text-white">Transacciones</h1>
 
       {/* FILTROS */}
-      <Card className="bg-[#2A2A29] border-[#3A3A38]">
-        <CardContent className="p-4 flex flex-wrap gap-4 items-end">
+      <Card className="bg-[#2A2A29] border-[#3A3A38] text-white">
+        <CardContent className="p-4 flex flex-wrap gap-4 items-end text-white">
           <div>
-            <label className="text-sm">Desde</label>
+            <label className="text-sm text-white">Desde</label>
             <Input
               type="date"
               value={desde}
@@ -129,7 +129,7 @@ export default function TransaccionesPage() {
           </div>
 
           <div>
-            <label className="text-sm">Hasta</label>
+            <label className="text-sm text-white">Hasta</label>
             <Input
               type="date"
               value={hasta}
@@ -138,14 +138,14 @@ export default function TransaccionesPage() {
             />
           </div>
 
-          <Button onClick={buscar} disabled={loading} className="bg-[#6A5D52]">
+          <Button onClick={buscar} disabled={loading} className="bg-[#6A5D52] text-white">
             Buscar
           </Button>
 
           <Button
             variant="outline"
             onClick={exportarExcel}
-            className="border-[#6A5D52] text-black hover:bg-[#6A5D52]"
+            className="border-[#6A5D52] text-white hover:bg-[#6A5D52]"
           >
             <FileDown className="mr-2 h-4 w-4" />
             Excel
@@ -154,12 +154,12 @@ export default function TransaccionesPage() {
       </Card>
 
       {/* VENTAS */}
-      <Card className="bg-[#111111] border-[#3A3A38]">
+      <Card className="bg-[#111111] border-[#3A3A38] text-white">
         <CardHeader>
-          <CardTitle>Ventas</CardTitle>
+          <CardTitle className="text-white">Ventas</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-auto">
-          <table className="w-full text-sm border-collapse">
+        <CardContent className="overflow-auto text-white">
+          <table className="w-full text-sm border-collapse text-white">
             <thead>
               <tr className="border-b border-[#3A3A38]">
                 {[
@@ -174,7 +174,7 @@ export default function TransaccionesPage() {
                   "DNI",
                   "Acciones",
                 ].map((h) => (
-                  <th key={h} className="p-3 text-left">
+                  <th key={h} className="p-3 text-left text-white">
                     {h}
                   </th>
                 ))}
@@ -184,7 +184,7 @@ export default function TransaccionesPage() {
               {ventas.map((v) => (
                 <tr
                   key={v.id}
-                  className="border-b border-[#2A2A29] hover:bg-[#1F1F1E]"
+                  className="border-b border-[#2A2A29] hover:bg-[#1F1F1E] text-white"
                 >
                   <td className="p-3">{v.producto}</td>
                   <td className="p-3">{v.cantidad}</td>
