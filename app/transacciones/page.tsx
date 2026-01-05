@@ -41,14 +41,26 @@ export default function TransaccionesPage() {
       toast.error("Seleccioná fecha desde y hasta");
       return;
     }
-
+  
+    // 🔑 FIX TIMEZONE: enviar fecha con hora explícita
+    const desdeISO = `${desde}T00:00:00`;
+    const hastaISO = `${hasta}T23:59:59`;
+  
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/transacciones?desde=${desde}&hasta=${hasta}`,
+        `${API}/transacciones?desde=${encodeURIComponent(
+          desdeISO
+        )}&hasta=${encodeURIComponent(hastaISO)}`,
         { credentials: "include" }
       );
-      if (!res.ok) throw new Error();
+  
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Error backend:", text);
+        throw new Error();
+      }
+  
       const data = await res.json();
       setVentas(data.ventas || []);
       setManuales(data.manuales || []);
@@ -59,16 +71,6 @@ export default function TransaccionesPage() {
     }
   };
 
-  const exportarExcel = () => {
-    if (!desde || !hasta) {
-      toast.error("Seleccioná fechas");
-      return;
-    }
-    window.open(
-      `${API}/transacciones/exportar?desde=${desde}&hasta=${hasta}`,
-      "_blank"
-    );
-  };
 
   const anularVenta = async (id: number) => {
     if (!confirm("¿Anular esta venta?")) return;
